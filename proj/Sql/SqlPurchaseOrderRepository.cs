@@ -30,6 +30,10 @@ public class SqlPurchaseOrderRepository(PurchaseOrderContext ctx) : IPurchaseOrd
     public async Task DeletePurchaseOrderAsync(string id)
     {
         var toDelete = await ctx.PurchaseOrders.FindAsync(id);
+        if (toDelete == null)
+        {
+            throw new InvalidOperationException($"Cannot delete: Purchase order not found. Id: {id}");
+        }
         ctx.PurchaseOrders.Remove(toDelete);
         await ctx.SaveChangesAsync();
     }

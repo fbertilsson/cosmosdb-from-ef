@@ -1,13 +1,33 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using CosmosdbFromEF;
+using CosmosdbFromEF.CosmosNoSql;
 using CosmosdbFromEF.Model;
 using CosmosdbFromEF.Sql;
+using Microsoft.Extensions.Configuration;
 
-Console.WriteLine("Hello, World!");
+Console.WriteLine("Hello there!");
 
-var context = new PurchaseOrderContext();
-context.Database.EnsureCreated();
-var sqlRepo = new SqlPurchaseOrderRepository(context);
+var builder = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddUserSecrets<Program>()
+    .AddEnvironmentVariables();
+var config = builder.Build();
+
+var useSql = args.Length > 0 && args[0].Equals("sql", StringComparison.OrdinalIgnoreCase);
+
+IPurchaseOrderRepository repo;
+if (useSql)
+{
+    var context = new PurchaseOrderContext();
+    context.Database.EnsureCreated();
+    repo = new SqlPurchaseOrderRepository(context);
+}
+else
+{
+    repo = new CosmosPurchaseOrderRepository(config);
+}
 
 Dictionary<string, Part> parts = new()
 {
@@ -30,9 +50,9 @@ var po1 = new PurchaseOrder
     ]
 };
 
-var readPo1 = await sqlRepo.CreatePurchaseOrderAsync(po1);
+var readPo1 = await repo.CreatePurchaseOrderAsync(po1);
 
-var orders = await sqlRepo.GetPurchaseOrdersByCustomerNameAsync(customer1Name);
+var orders = await repo.GetPurchaseOrdersByCustomerNameAsync(customer1Name);
 Console.WriteLine($"Purchase orders in DB: {orders.Count()}");
 
-await sqlRepo.DeletePurchaseOrderAsync(readPo1.Id!);
+await repo.DeletePurchaseOrderAsync(readPo1.Id!);

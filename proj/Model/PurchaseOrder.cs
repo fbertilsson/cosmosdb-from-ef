@@ -1,7 +1,10 @@
+using Newtonsoft.Json;
+
 namespace CosmosdbFromEF.Model;
 
 public record PurchaseOrder
 {
+    [JsonProperty("id")]
     public string? Id { get; set; }
     public string? CustomerName { get; set; }
     
